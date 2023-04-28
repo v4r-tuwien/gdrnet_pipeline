@@ -42,6 +42,8 @@ The services that are internally called are
 - ```/pose_estimator/detect_objects``` of the type [detectron2_service_server.srv](https://github.com/v4r-tuwien/object_detector_msgs/blob/main/srv/detectron2_service_server.srv) 
 - ```/pose_estimator/estimate_poses``` of the type [estimate_poses.srv](https://github.com/v4r-
 
+You can directly use the services or use the action server.
+
 ### Main Action
 ```
 #goal
