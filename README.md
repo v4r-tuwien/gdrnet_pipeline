@@ -8,10 +8,10 @@ The following commands will download the necessary data and then build all the d
 
 If the containers were already built before, you can still use the same commands (except download_data.sh) to start the pipeline.
 
-densefusion + verefine:
+full pipeline:
 ```
 ./download_data.sh
-cd compose
+cd compose/pipeline
 xhost +
 docker-compose up
 ```
@@ -20,17 +20,6 @@ Three Docker containers will be started:
 - yolov5: [YOLOv5](https://github.com/ultralytics/yolov5) trained on YCB-V Dataset
 - gdrnetpp: Pose Estimation with [GDR-Net++](https://github.com/shanice-l/gdrnpp_bop2022)
 - pose_estimator: Node that calls detect, estimate_pose service and delivers object poses
-
-## Build Dockerfile with global context
-
-yolov5:
-`docker build -t yolov5 -f src/yolov5/Dockerfile .`
-
-pose_estimator:
-`docker build -t pose_estimator -f src/task/Dockerfile .`
-
-gdrnpp:
-`docker build -t gdrnpp -f src/gdrnpp/Dockerfile .`
 
 ## Visualization
 In RVIZ you can view the final refined poses and the object segmentation by Mask-RCNN. 
@@ -133,10 +122,9 @@ intrinsics:
 - [0.0, 538.085452058436, 233.0483557773859]
 - [0.0, 0.0, 1.0]  
 
-cfg_dir: "/verefine/data"
+cfg_dir: "/gdrnet_pipeline/data"
 
-ycbv_names: /verefine/data/ycbv_names.json  # ycbv mapping form *.ply to object name
-ycbv_verefine: /verefine/data/ycbv_verefine.json  # necessary verefine information about the models
+ycbv_names: /gdrnet_pipeline/data/ycbv_names.json  # ycbv mapping form *.ply to object name
 
 color_topic: /camera/color/image_raw #  rgb image topic
 depth_topic: /camera/depth/image_rect_raw  # depth image topic
