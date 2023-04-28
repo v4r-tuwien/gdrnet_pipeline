@@ -1,0 +1,17 @@
+{
+    "estimation": {
+        "num_hypotheses": 5,
+        "mode": "df"
+    },
+    "refinement": {
+        "mode": "bab",
+        "bab_c": 1e-3,
+        "num_sim_steps": 60,
+        "num_iterations": 2
+    },
+    "filter": {
+        "detection_min_score": 0.1,
+        "estimation_min_score": 0.0,
+        "refinement_min_score": 0.1
+    }
+}

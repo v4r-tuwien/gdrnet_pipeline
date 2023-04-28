@@ -1,0 +1,30 @@
+# Camera topics and frames
+im_width: 640
+im_height: 480
+intrinsics:
+- [606.6173706054688, 0.0, 322.375]
+- [0.0, 605.2778930664062, 232.67811584472656]
+- [0.0, 0.0, 1.0]
+
+# Model Directories of container
+cfg_dir: "/verefine/data"
+models_dir: "/verefine/data/models/renderer"
+
+# YCBV Config Files
+ycbv_names: /verefine/data/ycbv_names.json
+ycbv_verefine: /verefine/data/ycbv_verefine.json
+
+# Topics
+color_topic: /camera/color/image_raw
+depth_topic: /camera/depth/image_rect_raw
+camera_info_topic: /camera/color/camera_info
+
+# ppf topics
+debug_visualization: True
+publish_tf: True
+max_dist: 1.0  # crop points farther than this [meters]
+down_scale: 1  # down_scale speeds things up by already subsampling the image [power of 2]
+
+# Plane detection
+distance_threshold: 0.01
+to_meters: 0.001

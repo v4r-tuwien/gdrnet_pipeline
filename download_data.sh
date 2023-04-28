@@ -11,6 +11,6 @@ rm -r gdrnpp_ycbv_weights.zip gdrnpp_ycbv_weights.pth
 
 wget -O gdrnpp_ycbv_models.zip "https://owncloud.tuwien.ac.at/index.php/s/gUxThY2caSsvix2/download"
 unzip gdrnpp_ycbv_models.zip
-mkdir -p ./src/gdrnpp/datasets/BOP_DATASETS/ycbv/models
-cp -r models ./src/gdrnpp/datasets/BOP_DATASETS/ycbv/models
+mkdir -p ./src/gdrnpp/datasets/BOP_DATASETS/ycbv
+cp -r models ./src/gdrnpp/datasets/BOP_DATASETS/ycbv
 rm -r gdrnpp_ycbv_models.zip models

@@ -70,13 +70,13 @@ RUN /bin/bash -c 'cd /task/3rdparty; \
 # copy src files
 WORKDIR /task
 COPY ./src/task /task/src
-COPY ./src/verefine/util /task/src/util
+# COPY ./src/verefine/util /task/src/util
 COPY ./config/config.json /task/src
 ENV PYTHONPATH=/task:/task/src:$PYTHONPATH
-RUN mv /task/src/renderer.py /task/3rdparty/verefine/src/verefine
-RUN rm /task/src/util/renderer.py
-RUN mv /task/src/renderer_task.py /task/src/util/renderer.py
-ENV PYTHONPATH=/task/3rdparty/verefine:/task/3rdparty/verefine/src:$PYTHONPATH
+# RUN mv /task/src/renderer.py /task/3rdparty/verefine/src/verefine
+# RUN rm /task/src/util/renderer.py
+# RUN mv /task/src/renderer_task.py /task/src/util/renderer.py
+# ENV PYTHONPATH=/task/3rdparty/verefine:/task/3rdparty/verefine/src:$PYTHONPATH
 
 
 # install python requirements
@@ -92,15 +92,15 @@ RUN add-apt-repository -y ppa:ubuntu-toolchain-r/test
 RUN apt-get update
 RUN apt-get install -y --no-install-recommends gcc-4.9
 RUN apt-get install -y --no-install-recommends --only-upgrade libstdc++6
-RUN pip install scikit-image==0.14.5 open3d==0.9.0.0
+#RUN pip install scikit-image==0.14.5 open3d==0.9.0.0
 
 ENV __NV_PRIME_RENDER_OFFLOAD=1 
 ENV __GLX_VENDOR_LIBRARY_NAME=nvidia
 
 RUN pip install tinyobjloader==2.0.0rc7
 
-RUN mkdir -p /verefine/data
-COPY ./data /verefine/data
+# RUN mkdir -p /verefine/data
+# COPY ./data /verefine/data
 
 RUN mkdir -p /config
 COPY ./config /config
