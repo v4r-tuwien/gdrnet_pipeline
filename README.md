@@ -1,5 +1,11 @@
 # Object detection and pose estimation pipeline using YOLOv5 and GDR-Net++
 The pipeline is implemented to use YCB-V objects.
+This repo includes submodules.
+Clone this repository via either SSH or HTTPS and clone the submodules:
+- `git clone https://github.com/v4r-tuwien/gdrnet_pipeline.git`
+- `cd gdrnet_pipeline`
+- `git submodule init`
+- `git submodule update`
 
 ## Startup using the compose file(s)
 [Configure](#configurations) all files first. Don't forget to set the [IP Adress of the ROS Master](#ros-master).
