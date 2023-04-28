@@ -99,8 +99,8 @@ ENV __GLX_VENDOR_LIBRARY_NAME=nvidia
 
 RUN pip install tinyobjloader==2.0.0rc7
 
-# RUN mkdir -p /verefine/data
-# COPY ./data /verefine/data
+RUN mkdir -p /gdrnet_pipeline/data
+COPY ./data /gdrnet_pipeline/data
 
 RUN mkdir -p /config
 COPY ./config /config

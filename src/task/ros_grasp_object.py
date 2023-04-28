@@ -127,7 +127,7 @@ class GraspPoseEstimator:
             # class ID
             name = detection.name
             try:
-                f = open("/verefine/data/ycbv_names.json")
+                f = open("/gdrnet_pipeline/data/ycbv_names.json")
                 ycbv_names = json.load(f)
                 f.close()
             except:

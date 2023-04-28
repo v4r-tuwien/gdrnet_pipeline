@@ -5,8 +5,8 @@ rm -r yolov5_ycbv_weights.zip yolov5_ycbv_weights.pt
 
 wget -O gdrnpp_ycbv_weights.zip "https://owncloud.tuwien.ac.at/index.php/s/fkCygRgrV9C7zDH/download"
 unzip gdrnpp_ycbv_weights.zip
-mkdir -p ./src/gdrnpp/outputs
-cp -r gdrnpp_ycbv_weights.pth ./src/gdrnpp/outputs/gdrnpp_ycbv_weights.pth
+mkdir -p ./src/gdrnpp/output/gdrn/ycbv
+cp -r gdrnpp_ycbv_weights.pth ./src/gdrnpp/output/gdrn/ycbv/gdrnpp_ycbv_weights.pth
 rm -r gdrnpp_ycbv_weights.zip gdrnpp_ycbv_weights.pth
 
 wget -O gdrnpp_ycbv_models.zip "https://owncloud.tuwien.ac.at/index.php/s/gUxThY2caSsvix2/download"
