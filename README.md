@@ -8,8 +8,10 @@ Clone this repository via either SSH or HTTPS and clone the submodules as well b
 - `git submodule update`
 
 Use the following to pull updates:
-- `git pull`
-- `git submodule update --recursive --remote`
+- `git pull --recurse-submodules`
+
+Currently the YOLOv5 and the GDRN++ docker containers need ~35 GB of free disk space.
+We try to downsize in the future.
 
 ## Startup using the compose file(s)
 [Configure](#configurations) all files first. Don't forget to set the [IP Adress of the ROS Master](#ros-master) if you have another ROS-Core running.

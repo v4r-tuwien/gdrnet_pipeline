@@ -1,6 +1,6 @@
 [submodule "src/yolov5"]
 	path = src/yolov5
-	url = https://github.com/hoenigpeter/yolov5_ros.git
+	url = https://github.com/hoenigpeter/yolov5_ros
 [submodule "src/gdrnpp"]
 	path = src/gdrnpp
 	url = https://github.com/hoenigpeter/gdrnpp_bop2022
