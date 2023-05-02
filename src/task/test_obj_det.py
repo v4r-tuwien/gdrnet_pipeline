@@ -24,21 +24,24 @@ def estimate(rgb, depth, detection):
         print("Service call failed: %s" % e)
 
 def get_poses():
-        while(1):
-            rgb = rospy.wait_for_message('/camera/color/image_raw', Image)
-            depth = rospy.wait_for_message('/camera/depth/image_rect_raw', Image)
-            print('Perform detection with YOLOv5 ...')
-            detections = detect(rgb)
-            print("... received detection.")
+    rate = rospy.Rate(2) # Hz
+    while not rospy.is_shutdown():
+        rgb = rospy.wait_for_message(rospy.get_param('/pose_estimator/color_topic'), Image)
+        depth = rospy.wait_for_message(rospy.get_param('/pose_estimator/depth_topic'), Image)
+        print('Perform detection with YOLOv5 ...')
+        detections = detect(rgb)
+        print("... received detection.")
 
-            if detections is None or len(detections) == 0:
-                print("nothing detected")
-            
-            else:
-                print('Perform pose estimation with GDR-Net++ ...')
-                for detection in detections:
-                    instance_poses = estimate(rgb, depth, detection)
-                    print(f"Got pose for: {instance_poses}")
+        if detections is None or len(detections) == 0:
+            print("nothing detected")
+        
+        else:
+            print('Perform pose estimation with GDR-Net++ ...')
+            for detection in detections:
+                instance_poses = estimate(rgb, depth, detection)
+                print(f"Got pose for: {instance_poses}")
+
+        rate.sleep()
     
 if __name__ == "__main__":
     rospy.init_node("get_poses")

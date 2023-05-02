@@ -7,6 +7,10 @@ Clone this repository via either SSH or HTTPS and clone the submodules as well b
 - `git submodule init`
 - `git submodule update`
 
+Use the following to pull updates:
+- `git pull`
+- `git submodule update --recursive --remote`
+
 ## Startup using the compose file(s)
 [Configure](#configurations) all files first. Don't forget to set the [IP Adress of the ROS Master](#ros-master) if you have another ROS-Core running.
 
@@ -30,7 +34,7 @@ Three Docker containers will be started:
 ## ROS Service Calls
 This package hosts two main services:
 - ```/pose_estimator/detect_objects``` of the type [detectron2_service_server.srv](https://github.com/v4r-tuwien/object_detector_msgs/blob/main/srv/detectron2_service_server.srv) 
-- ```/pose_estimator/estimate_poses``` of the type [estimate_poses.srv](https://github.com/v4r-
+- ```/pose_estimator/estimate_poses``` of the type [estimate_poses.srv](https://github.com/v4r-tuwien/object_detector_msgs/blob/main/srv/estimate_poses.srv)
 
 You can directly use the services in your own nodes.
 The services are also called using the task container which is automatically started via `docker compose up`.
@@ -87,6 +91,8 @@ intrinsics:
 
 color_topic: /camera/color/image_raw #  rgb image topic
 depth_topic: /camera/depth/image_rect_raw  # depth image topic
+
+color_frame_id: camera_color_optical_frame
 ```
 
 ### ROS Master
