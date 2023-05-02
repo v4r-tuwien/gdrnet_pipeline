@@ -6,9 +6,6 @@ intrinsics:
 - [0.0, 605.2778930664062, 232.67811584472656]
 - [0.0, 0.0, 1.0]
 
-# YCBV Config
-ycbv_names: /gdrnet_pipeline/data/ycbv_names.json
-
 # Topics
 color_topic: /camera/color/image_raw
 depth_topic: /camera/depth/image_rect_raw
