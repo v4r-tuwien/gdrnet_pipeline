@@ -1,14 +1,14 @@
 # Object detection and pose estimation pipeline using YOLOv5 and GDR-Net++
-The pipeline is implemented to use YCB-V objects.
+The pipeline is implemented for the detection and pose estimatino of YCB-V objects.
 This repo includes submodules.
-Clone this repository via either SSH or HTTPS and clone the submodules:
+Clone this repository via either SSH or HTTPS and clone the submodules as well by:
 - `git clone https://github.com/v4r-tuwien/gdrnet_pipeline.git`
 - `cd gdrnet_pipeline`
 - `git submodule init`
 - `git submodule update`
 
 ## Startup using the compose file(s)
-[Configure](#configurations) all files first. Don't forget to set the [IP Adress of the ROS Master](#ros-master).
+[Configure](#configurations) all files first. Don't forget to set the [IP Adress of the ROS Master](#ros-master) if you have another ROS-Core running.
 
 The following commands will download the necessary data and then build all the docker containers and start them. 
 
@@ -24,61 +24,16 @@ docker-compose up
 
 Three Docker containers will be started:
 - yolov5: [YOLOv5](https://github.com/ultralytics/yolov5) trained on YCB-V Dataset
-- gdrnetpp: Pose Estimation with [GDR-Net++](https://github.com/shanice-l/gdrnpp_bop2022)
-- pose_estimator: Node that calls detect, estimate_pose service and delivers object poses
+- gdrnetpp: Pose Estimation with [GDR-Net++](https://github.com/shanice-l/gdrnpp_bop2022) trained on YCB-V Dataset
+- task: Node that calls detect, estimate_pose service and calculates object poses
 
-## Visualization
-In RVIZ you can view the final refined poses and the object segmentation by Mask-RCNN. 
-They are published as images to these topics:
-- ```/pose_estimator/segmentation```
-- ```/pose_estimator/estimated_poses``` (densefusion)
- 
-## Service and Action Server
-The pipeline will advertise a action server ```/pose_estimator/find_grasppose``` of the type [GenericImgProcAnnotator.action](https://github.com/v4r-tuwien/object_detector_msgs/blob/main/action/GenericImgProcAnnotator.action). The response represents the refined poses of the detected objects in the camera frame.
-
-You can use the test file in ```src/test_obj_det.py``` to quickly check whether the pipeline works. 
-
-The services that are internally called are 
+## ROS Service Calls
+This package hosts two main services:
 - ```/pose_estimator/detect_objects``` of the type [detectron2_service_server.srv](https://github.com/v4r-tuwien/object_detector_msgs/blob/main/srv/detectron2_service_server.srv) 
 - ```/pose_estimator/estimate_poses``` of the type [estimate_poses.srv](https://github.com/v4r-
 
-You can directly use the services or use the action server.
-
-### Main Action
-```
-#goal
-sensor_msgs/Image rgb
-sensor_msgs/Image depth
-string description
-
----
-#result
-bool success
-string result_feedback
-
-# A list of bounding boxes for all detected objects
-sensor_msgs/RegionOfInterest[] bounding_boxes
-
-# Class IDs for each entry in bounding_boxes
-int32[] class_ids
-
-# Class confidence for each entry in bounding_boxes
-float32[] class_confidences
-
-# An image that can be used to send preprocessed intermediate results,
-# inferred segmentation masks or maybe even a result image, depending on the use case
-sensor_msgs/Image image
-
-# The best pose for each entry in bounding_boxes
-geometry_msgs/Pose[] pose_results
-
-# Array-based string feedback when generating text for all detected objects etc.
-string[] descriptions
-
----
-#feedback
-string feedback
-```
+You can directly use the services in your own nodes.
+The services are also called using the task container which is automatically started via `docker compose up`.
 
 ### Main Service
 
@@ -119,7 +74,7 @@ int64[] mask
 
 ## Configurations
 ### Config-Files
-The params for camera, model paths and topics are in config/params.yaml
+The params for camera intrinsics and rgb/depth-topics are in config/params.yaml
 Change this according to your project
 
 ```
@@ -128,15 +83,10 @@ im_height: # input image height
 intrinsics:
 - [538.391033533567, 0.0, 315.3074696331638]  # camera intrinsics
 - [0.0, 538.085452058436, 233.0483557773859]
-- [0.0, 0.0, 1.0]  
-
-cfg_dir: "/gdrnet_pipeline/data"
-
-ycbv_names: /gdrnet_pipeline/data/ycbv_names.json  # ycbv mapping form *.ply to object name
+- [0.0, 0.0, 1.0] 
 
 color_topic: /camera/color/image_raw #  rgb image topic
 depth_topic: /camera/depth/image_rect_raw  # depth image topic
-camera_info_topic: /camera/color/camera_info # camera info topic
 ```
 
 ### ROS Master
@@ -149,7 +99,7 @@ environment:
 ### ROS Namespace
 The Namespace is also defined in the docker-compose.yml file for each container. It is passed as command with the python script calls like this:
 ```
-command: bash -c "source /yolov 5/catkin_ws/devel/setup.bash; ROS_NAMESPACE=pose_estimator python3 /yolov5/src/yolov5/ros_detection.py"
+command: bash -c "source /yolo/catkin_ws/devel/setup.bash; ROS_NAMESPACE=pose_estimator python /yolov5/src/yolov5/ros_detection.py"
 ```
 
 If you change it, the service names and visualization topics will change accordingly.

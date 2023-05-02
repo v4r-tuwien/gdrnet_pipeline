@@ -1,22 +1,26 @@
 version: '2.4'
 services:
-
   pose:
-    image: "pose_estimator"
-    network_mode: "host"
+    image: task
+    privileged: true
     build: 
       context: ../../
-      dockerfile: src/task/Dockerfile
+      dockerfile: src/task/dockerfile
+    network_mode: "host"
     runtime: "nvidia"
+    volumes:
+      - /dev/bus/usb:/dev/bus/usb
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ../../src/task:/root/task
+      - ../../config:/root/config
     environment:
-      ROS_MASTER_URI: "http://127.0.0.1:11311"
-      ROS_IP: "127.0.0.1"
-      DISPLAY: ${DISPLAY}
-      Xvfb: 99 -screen 0 1920x1080x24
-      QT_X11_NO_MITSHM: 1 
+      - ROS_MASTER_URI=http://127.0.0.1:11311
+      - ROS_IP=127.0.0.1
+      - DISPLAY
+      - QT_X11_NO_MITSHM=1
 
-    command: bash -c "source /task/catkin_ws/devel/setup.bash; 
-                      rosparam load  /config/params.yaml /pose_estimator;
-                      ROS_NAMESPACE=pose_estimator python /task/src/ros_grasp_object.py"
+    command: bash -c "source catkin_ws/devel/setup.bash;
+                      rosparam load /root/config/params.yaml /pose_estimator;
+                      ROS_NAMESPACE=pose_estimator python /root/task/test_obj_det.py"
     stdin_open: true
     tty: true
