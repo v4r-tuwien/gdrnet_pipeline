@@ -82,7 +82,7 @@ int64[] mask
 ### Config-Files
 The params for camera intrinsics and rgb/depth-topics are in config/params.yaml
 Change this according to your project
-
+Currently the resolution must be 640x480 
 ```
 im_width  # input image widht
 im_height: # input image height
