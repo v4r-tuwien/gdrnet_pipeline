@@ -91,18 +91,18 @@ intrinsics:
 - [0.0, 538.085452058436, 233.0483557773859]
 - [0.0, 0.0, 1.0] 
 
-color_topic: /camera/color/image_raw #  rgb image topic
-depth_topic: /camera/depth/image_rect_raw  # depth image topic
+color_topic: /hsrb/head_rgbd_sensor/rgb/image_rect_color #  rgb image topic
+depth_topic: /hsrb/head_rgbd_sensor/depth_registered/image_rect_raw  # depth image topic
 
-color_frame_id: camera_color_optical_frame
+color_frame_id: head_rgbd_sensor_rgb_frame
 ```
 
 ### ROS Master
 The ROS Master is set in the docker-compose.yml file for each container 
 ```
 environment:
-      ROS_MASTER_URI: "http://127.0.0.1:11311"
-      ROS_IP: "127.0.0.1"
+      ROS_MASTER_URI: "http://hsrb.local:11311"
+      ROS_IP: "10.0.0.232"
 ```
 ### ROS Namespace
 The Namespace is also defined in the docker-compose.yml file for each container. It is passed as command with the python script calls like this:
