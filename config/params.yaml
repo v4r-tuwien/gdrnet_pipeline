@@ -2,13 +2,13 @@
 im_width: 640
 im_height: 480
 intrinsics:
-- [606.6173706054688, 0.0, 322.375]
-- [0.0, 605.2778930664062, 232.67811584472656]
+- [538.391033533567, 0.0, 315.3074696331638]
+- [0.0, 538.085452058436, 233.0483557773859]
 - [0.0, 0.0, 1.0]
 
 # Topics
-color_topic: /camera/color/image_raw
-depth_topic: /camera/depth/image_rect_raw
+color_topic: /hsrb/head_rgbd_sensor/rgb/image_rect_color
+depth_topic: /hsrb/head_rgbd_sensor/depth_registered/image_rect_raw
 
 # Frame ids
-color_frame_id: camera_color_optical_frame
+color_frame_id: head_rgbd_sensor_rgb_frame

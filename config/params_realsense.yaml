@@ -1,0 +1,14 @@
+# Camera topics and frames
+im_width: 640
+im_height: 480
+intrinsics:
+- [606.6173706054688, 0.0, 322.375]
+- [0.0, 605.2778930664062, 232.67811584472656]
+- [0.0, 0.0, 1.0]
+
+# Topics
+color_topic: /camera/color/image_raw
+depth_topic: /camera/depth/image_rect_raw
+
+# Frame ids
+color_frame_id: camera_color_optical_frame

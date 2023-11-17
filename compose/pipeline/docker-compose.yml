@@ -14,14 +14,15 @@ services:
       - ../../src/task:/root/task
       - ../../config:/root/config
     environment:
-      - ROS_MASTER_URI=http://127.0.0.1:11311
-      - ROS_IP=127.0.0.1
+      - ROS_MASTER_URI=http://hsrb.local:11311
+      - ROS_IP=10.0.0.232
+      - ROS_HOSTNAME=rocco
       - DISPLAY
       - QT_X11_NO_MITSHM=1
 
     command: bash -c "source catkin_ws/devel/setup.bash;
                       rosparam load /root/config/params.yaml /pose_estimator;
-                      ROS_NAMESPACE=pose_estimator python /root/task/test_obj_det.py"
+                      python /root/task/test_obj_det_robokudo.py"
     stdin_open: true
     tty: true
 
@@ -38,11 +39,12 @@ services:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - ../../src/yolov5:/root/yolo
     environment:
-      - ROS_MASTER_URI=http://127.0.0.1:11311
-      - ROS_IP=127.0.0.1
+      - ROS_MASTER_URI=http://hsrb.local:11311
+      - ROS_IP=10.0.0.232
+      - ROS_HOSTNAME=rocco
       - DISPLAY
       - QT_X11_NO_MITSHM=1
-    command: bash -c "source catkin_ws/devel/setup.bash; ROS_NAMESPACE=pose_estimator python ./yolo/detect_ros_seg.py --weights ./yolo/yolov5_ycbv_weights.pt --data ./yolo/data/ycbv.yaml --camera-topic "$(rosparam get /pose_estimator/color_topic)""
+    command: bash -c "source catkin_ws/devel/setup.bash; python ./yolo/detect_ros_seg.py --weights ./yolo/yolov5_ycbv_weights.pt --data ./yolo/data/ycbv.yaml --camera-topic '$$(rosparam get /pose_estimator/color_topic)'"
     stdin_open: true
     tty: true 
 
@@ -58,10 +60,11 @@ services:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - /etc/localtime:/etc/localtime:ro
     environment:
-      - ROS_MASTER_URI=http://127.0.0.1:11311
-      - ROS_IP=127.0.0.1
+      - ROS_MASTER_URI=http://hsrb.local:11311
+      - ROS_IP=10.0.0.232
+      - ROS_HOSTNAME=rocco
       - DISPLAY
       - QT_X11_NO_MITSHM=1
-    command: bash -c "source catkin_ws/devel/setup.bash; ROS_NAMESPACE=pose_estimator python ./gdrnpp/core/gdrn_modeling/demo/demo_gdrn_ros.py"        
+    command: bash -c "source catkin_ws/devel/setup.bash; python ./gdrnpp/core/gdrn_modeling/demo/demo_gdrn_ros.py"        
     stdin_open: true
     tty: true

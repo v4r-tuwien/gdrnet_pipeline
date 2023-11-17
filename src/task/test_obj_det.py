@@ -3,7 +3,6 @@ import rospy
 from object_detector_msgs.srv import detectron2_service_server, estimate_poses
 import actionlib
 from sensor_msgs.msg import Image
-from object_detector_msgs.msg import PoseWithConfidence
 import tf
 
 def detect(rgb):
@@ -25,12 +24,12 @@ def estimate(rgb, depth, detection):
         print("Service call failed: %s" % e)
 
 def get_poses():
-    pub = rospy.Publisher('pose', PoseWithConfidence, queue_size=10)
-
     rate = rospy.Rate(2) # Hz
     while not rospy.is_shutdown():
         rgb = rospy.wait_for_message(rospy.get_param('/pose_estimator/color_topic'), Image)
-        depth = rospy.wait_for_message(rospy.get_param('/pose_estimator/depth_topic'), Image)
+        # TODO: In the current implementation we do not use the depth, so we do not have to describe to it
+        # depth = rospy.wait_for_message(rospy.get_param('/pose_estimator/depth_topic'), Image)
+        depth = rgb
         print('Perform detection with YOLOv5 ...')
         detections = detect(rgb)
         print("... received detection.")
@@ -43,7 +42,6 @@ def get_poses():
             for detection in detections:
                 instance_poses = estimate(rgb, depth, detection)
                 print(f"Got pose for: {instance_poses}")
-                pub.publish(instance_poses[0])
 
         rate.sleep()
     
