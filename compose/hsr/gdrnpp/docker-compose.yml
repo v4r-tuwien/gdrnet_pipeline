@@ -1,0 +1,22 @@
+version: '2.4'
+services:
+  gdrnpp:
+    image: gdrnpp
+    build:
+      context: ../../../src/gdrnpp/docker
+      dockerfile: dockerfile_ros
+    network_mode: "host"
+    runtime: "nvidia"
+    volumes:
+      - "../../../src/gdrnpp:/root/gdrnpp:rw"
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - ROS_MASTER_URI=http://hsrb.local:11311
+      - ROS_IP=10.0.0.232
+      - ROS_HOSTNAME=rocco
+      - DISPLAY
+      - QT_X11_NO_MITSHM=1
+    command: bash -c "source catkin_ws/devel/setup.bash; python ./gdrnpp/core/gdrn_modeling/demo/demo_gdrn_ros.py"        
+    stdin_open: true
+    tty: true

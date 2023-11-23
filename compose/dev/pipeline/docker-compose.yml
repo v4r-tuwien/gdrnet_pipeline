@@ -4,22 +4,20 @@ services:
     image: task
     privileged: true
     build: 
-      context: ../../
+      context: ../../../
       dockerfile: src/task/dockerfile
     network_mode: "host"
     runtime: "nvidia"
     volumes:
       - /dev/bus/usb:/dev/bus/usb
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
-      - ../../src/task:/root/task
-      - ../../config:/root/config
+      - ../../../src/task:/root/task
+      - ../../../config:/root/config
     environment:
-      - ROS_MASTER_URI=http://hsrb.local:11311
-      - ROS_IP=10.0.0.232
-      - ROS_HOSTNAME=rocco
+      - ROS_MASTER_URI=http://127.0.0.1:11311
+      - ROS_IP=127.0.0.1
       - DISPLAY
       - QT_X11_NO_MITSHM=1
-
     command: bash -c "source catkin_ws/devel/setup.bash;
                       rosparam load /root/config/params.yaml /pose_estimator;
                       python /root/task/test_obj_det_robokudo.py"
@@ -30,18 +28,17 @@ services:
     image: yolov5
     privileged: true
     build:
-      context: ../../src/yolov5/docker/ycbv_segmentation_service
+      context: ../../../src/yolov5/docker/ycbv_segmentation_service
       dockerfile: dockerfile
     network_mode: "host"
     runtime: "nvidia"
     volumes:
       - /dev/bus/usb:/dev/bus/usb
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
-      - ../../src/yolov5:/root/yolo
-    environment:
-      - ROS_MASTER_URI=http://hsrb.local:11311
-      - ROS_IP=10.0.0.232
-      - ROS_HOSTNAME=rocco
+      - ../../../src/yolov5:/root/yolo
+    environment: 
+      - ROS_MASTER_URI=http://127.0.0.1:11311
+      - ROS_IP=127.0.0.1
       - DISPLAY
       - QT_X11_NO_MITSHM=1
     command: bash -c "source catkin_ws/devel/setup.bash; python ./yolo/detect_ros_seg.py --weights ./yolo/yolov5_ycbv_weights.pt --data ./yolo/data/ycbv.yaml --camera-topic '$$(rosparam get /pose_estimator/color_topic)'"
@@ -51,18 +48,17 @@ services:
   gdrnpp:
     image: gdrnpp
     build:
-      context: ../../src/gdrnpp/docker
+      context: ../../../src/gdrnpp/docker
       dockerfile: dockerfile_ros
     network_mode: "host"
     runtime: "nvidia"
     volumes:
-      - "../../src/gdrnpp:/root/gdrnpp:rw"
+      - "../../../src/gdrnpp:/root/gdrnpp:rw"
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - /etc/localtime:/etc/localtime:ro
-    environment:
-      - ROS_MASTER_URI=http://hsrb.local:11311
-      - ROS_IP=10.0.0.232
-      - ROS_HOSTNAME=rocco
+    environment: 
+      - ROS_MASTER_URI=http://127.0.0.1:11311
+      - ROS_IP=127.0.0.1
       - DISPLAY
       - QT_X11_NO_MITSHM=1
     command: bash -c "source catkin_ws/devel/setup.bash; python ./gdrnpp/core/gdrn_modeling/demo/demo_gdrn_ros.py"        
