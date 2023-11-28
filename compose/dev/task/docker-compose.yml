@@ -19,7 +19,7 @@ services:
       - DISPLAY
       - QT_X11_NO_MITSHM=1
     command: bash -c "source catkin_ws/devel/setup.bash;
-                      rosparam load /root/config/params.yaml /pose_estimator;
+                      rosparam load /root/config/params_realsense.yaml /pose_estimator;
                       python /root/task/test_obj_det.py"
     stdin_open: true
     tty: true
