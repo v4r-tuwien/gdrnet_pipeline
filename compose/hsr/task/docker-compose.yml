@@ -1,0 +1,27 @@
+version: '2.4'
+services:
+  task:
+    image: task
+    privileged: true
+    build: 
+      context: ../../../
+      dockerfile: src/task/dockerfile
+    network_mode: "host"
+    runtime: "nvidia"
+    volumes:
+      - /dev/bus/usb:/dev/bus/usb
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ../../../src/task:/root/task
+      - ../../../config:/root/config
+    environment:
+      - ROS_MASTER_URI=http://hsrb.local:11311
+      - ROS_IP=10.0.0.232
+      - ROS_HOSTNAME=rocco
+      - DISPLAY
+      - QT_X11_NO_MITSHM=1
+
+    command: bash -c "source catkin_ws/devel/setup.bash;
+                      rosparam load /root/config/params.yaml /pose_estimator;
+                      python /root/task/test_obj_det.py"
+    stdin_open: true
+    tty: true
