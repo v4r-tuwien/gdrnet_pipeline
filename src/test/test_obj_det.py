@@ -6,7 +6,7 @@ from sensor_msgs.msg import Image
 
 
 def get_poses():
-    client = actionlib.SimpleActionClient('/pose_estimator/gdrnet', GenericImgProcAnnotatorAction)
+    client = actionlib.SimpleActionClient('/pose_estimator', GenericImgProcAnnotatorAction)
     res = client.wait_for_server(rospy.Duration(10.0))
     if res is False:
         rospy.logerr('Timeout when trying to connect to actionserver')

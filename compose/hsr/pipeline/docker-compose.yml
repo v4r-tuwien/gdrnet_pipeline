@@ -44,7 +44,8 @@ services:
       - ROS_HOSTNAME=rocco
       - DISPLAY
       - QT_X11_NO_MITSHM=1
-    command: bash -c "source catkin_ws/devel/setup.bash; python ./yolo/detect_ros_seg.py --weights ./yolo/yolov5_ycbv_weights.pt --data ./yolo/data/ycbv.yaml --camera-topic '$$(rosparam get /pose_estimator/color_topic)'"
+    command: bash -c "source catkin_ws/devel/setup.bash;
+                      python ./yolo/detect_ros_seg.py --weights ./yolo/yolov5_ycbv_weights.pt --data ./yolo/data/ycbv.yaml --camera-topic '$$(rosparam get /pose_estimator/color_topic)'"
     stdin_open: true
     tty: true 
 
@@ -65,6 +66,6 @@ services:
       - ROS_HOSTNAME=rocco
       - DISPLAY
       - QT_X11_NO_MITSHM=1
-    command: bash -c "source catkin_ws/devel/setup.bash; python ./gdrnpp/core/gdrn_modeling/demo/demo_gdrn_ros.py"        
+    command: bash -c "source catkin_ws/devel/setup.bash; python ./gdrnpp/core/gdrn_modeling/demo/demo_gdrn_ros_robokudo.py"        
     stdin_open: true
     tty: true

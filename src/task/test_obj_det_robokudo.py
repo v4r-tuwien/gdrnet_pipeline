@@ -1,15 +1,19 @@
 #! /usr/bin/env python3
 import rospy
-from object_detector_msgs.srv import detectron2_service_server, estimate_poses
-from robokudo_msgs.msg import GenericImgProcAnnotatorAction, GenericImgProcAnnotatorResult, GenericImgProcAnnotatorFeedback
+from object_detector_msgs.srv import detectron2_service_server
+from robokudo_msgs.msg import GenericImgProcAnnotatorAction, GenericImgProcAnnotatorResult, GenericImgProcAnnotatorFeedback, GenericImgProcAnnotatorGoal
 import actionlib
-from sensor_msgs.msg import Image
-from object_detector_msgs.msg import PoseWithConfidence
+from sensor_msgs.msg import Image, RegionOfInterest
 import tf
+import numpy as np
 
 class PoseCalculator:
     def __init__(self):
-        self.server = actionlib.SimpleActionServer('/pose_estimator/gdrnet', 
+        self.client = actionlib.SimpleActionClient('/pose_estimator/gdrnet', 
+                                                   GenericImgProcAnnotatorAction)
+        self.client.wait_for_server()
+
+        self.server = actionlib.SimpleActionServer('/pose_estimator', 
                                                    GenericImgProcAnnotatorAction, 
                                                    execute_cb=self.get_poses_robokudo, 
                                                    auto_start=False)
@@ -22,17 +26,45 @@ class PoseCalculator:
             response = detect_objects(rgb)
             return response.detections.detections
         except rospy.ServiceException as e:
+
             print("Service call failed: %s" % e)
 
-    def estimate(self, rgb, depth, detection):
-        rospy.wait_for_service('estimate_poses')
+    def estimate(self, rgb, depth, detections):
         try:
-            estimate_pose = rospy.ServiceProxy('estimate_poses', estimate_poses)
-            response = estimate_pose(detection, rgb, depth)
-            print(f"{response=}")
-            return response.poses
+            goal = GenericImgProcAnnotatorGoal()
+            goal.rgb = rgb
+            goal.depth = depth
+            bb_detections = []
+            class_names = []
+            description = ''
+            ind_detections = np.arange(0, len(detections), 1)
+            for detection, index in zip(detections, ind_detections):
+                print(f"{index=}")
+                roi = RegionOfInterest()
+                roi.x_offset = detection.bbox.ymin
+                roi.y_offset = detection.bbox.xmin
+                roi.height = detection.bbox.xmax - detection.bbox.xmin
+                roi.width = detection.bbox.ymax - detection.bbox.ymin
+                roi.do_rectify = False
+
+                bb_detections.append(roi)
+                class_names.append(detection.name)
+                if index == 0:
+                    description = description + f'"{detection.name}": "{detection.score}"'
+                else:
+                    description = description + f', "{detection.name}": "{detection.score}"'
+            description = '{' + description + '}'
+            print(f"{description=}")
+            goal.bb_detections = bb_detections
+            goal.class_names = class_names
+            goal.description = description
+            self.client.send_goal(goal)
+            self.client.wait_for_result()
+            result = self.client.get_result()
         except rospy.ServiceException as e:
             print("Service call failed: %s" % e)
+
+        return result
 
     def get_poses_robokudo(self, goal):
         res = GenericImgProcAnnotatorResult()
@@ -60,25 +92,16 @@ class PoseCalculator:
             return
         else:
             print('Perform pose estimation with GDR-Net++ ...')
-            class_names = []
-            class_confidences = []
-            pose_results = []
-            # print(f"{detections=}")
-            for detection in detections:
-                instance_poses_list:PoseWithConfidence = self.estimate(rgb, depth, detection)
-                instance_poses = instance_poses_list[0]
-                # print(f"Got pose for: {instance_poses}")
-                if len(instance_poses_list) >= 1:
-                    #TODO fill message -> pose/class_name und ggf. confidence
-                    class_names.append(instance_poses.name)
-                    class_confidences.append(instance_poses.confidence)
-                    pose_results.append(instance_poses.pose)
+            try:
+                res = self.estimate(rgb, depth, detections)
+            except Exception as e:
+                rospy.logerr(f"{e=}")
 
-        res.class_names = class_names
+        # res.class_names = class_names
         res.result_feedback = res.result_feedback + ", class_names"
-        res.class_confidences = class_confidences
+        # res.class_confidences = class_confidences
         res.result_feedback = res.result_feedback + ", class_confidences"
-        res.pose_results = pose_results
+        # res.pose_results = pose_results
         res.result_feedback = res.result_feedback + ", pose_results"
         res.success = True
         print(f"{res=}")
