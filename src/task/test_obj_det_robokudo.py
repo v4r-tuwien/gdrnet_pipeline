@@ -13,9 +13,9 @@ class PoseCalculator:
                                                    GenericImgProcAnnotatorAction)
         self.client.wait_for_server()
 
-        self.server = actionlib.SimpleActionServer('/pose_estimator', 
-                                                   GenericImgProcAnnotatorAction, 
-                                                   execute_cb=self.get_poses_robokudo, 
+        self.server = actionlib.SimpleActionServer('/pose_estimator',
+                                                   GenericImgProcAnnotatorAction,
+                                                   execute_cb=self.get_poses_robokudo,
                                                    auto_start=False)
         self.server.start()
 
