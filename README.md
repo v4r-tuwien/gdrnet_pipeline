@@ -33,6 +33,13 @@ Three Docker containers will be started:
 - gdrnetpp: Pose Estimation with [GDR-Net++](https://github.com/shanice-l/gdrnpp_bop2022) trained on YCB-V Dataset
 - task: Node that calls detect, estimate_pose service and calculates object poses
 
+## Visualization
+To visualize the estimated bounding box and object pose use RViZ and load the RViZ config from ./configs/default.rviz
+In RViZ visualize the following topics:
+- RGB image with bounding box: /pose_estimator/image_with_roi
+- Marker of estimated mesh: /object_markers
+- Activate visualization of TFs for 6DoF frame of estimated object pose
+
 ## ROS Service Calls
 This package hosts two main services:
 - ```/pose_estimator/detect_objects``` of the type [detectron2_service_server.srv](https://github.com/v4r-tuwien/object_detector_msgs/blob/main/srv/detectron2_service_server.srv) 
