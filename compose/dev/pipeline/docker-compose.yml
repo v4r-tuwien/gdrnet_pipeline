@@ -20,7 +20,7 @@ services:
       - QT_X11_NO_MITSHM=1
     command: bash -c "source catkin_ws/devel/setup.bash;
                       rosparam load /root/config/params_realsense.yaml /pose_estimator;
-                      python /root/task/test_obj_det.py"
+                      python /root/task/test_obj_det_dev.py"
     stdin_open: true
     tty: true
 
@@ -62,6 +62,7 @@ services:
       - ROS_IP=127.0.0.1
       - DISPLAY
       - QT_X11_NO_MITSHM=1
-    command: bash -c "source catkin_ws/devel/setup.bash; python ./gdrnpp/core/gdrn_modeling/demo/demo_gdrn_ros.py --model_file 'ycbv'"        
+    command: bash -c "source catkin_ws/devel/setup.bash;
+             python ./gdrnpp/core/gdrn_modeling/demo/demo_gdrn_ros_robokudo.py --model_file ycbv"        
     stdin_open: true
     tty: true
