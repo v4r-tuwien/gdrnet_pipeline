@@ -1,4 +1,4 @@
-# Object detection and pose estimation pipeline using YOLOv5 and GDR-Net++
+# Object detection and pose estimation pipeline using YOLOv8 and GDR-Net++
 The pipeline is implemented for the detection and pose estimatino of YCB-V objects.
 This repo includes submodules.
 Clone this repository via either SSH or HTTPS and clone the submodules as well by:
@@ -10,8 +10,7 @@ Clone this repository via either SSH or HTTPS and clone the submodules as well b
 Use the following to pull updates:
 - `git pull --recurse-submodules`
 
-Currently the YOLOv5 and the GDRN++ docker containers need ~35 GB of free disk space.
-We try to downsize in the future.
+The YOLOv8 and the GDRN++ docker containers need ~35 GB of free disk space.
 
 ## Startup using the compose file(s)
 [Configure](#configurations) all files first. Don't forget to set the [IP Adress of the ROS Master](#ros-master) if you have another ROS-Core running.
@@ -29,7 +28,7 @@ docker-compose up
 ```
 
 Three Docker containers will be started:
-- yolov5: [YOLOv5](https://github.com/ultralytics/yolov5) trained on YCB-V Dataset
+- yolov8: [YOLOv8](https://github.com/hoenigpeter/yolov8_ros) trained on YCB-V Dataset
 - gdrnetpp: Pose Estimation with [GDR-Net++](https://github.com/shanice-l/gdrnpp_bop2022) trained on YCB-V Dataset
 - task: Node that calls detect, estimate_pose service and calculates object poses
 
@@ -111,11 +110,4 @@ environment:
       ROS_MASTER_URI: "http://hsrb.local:11311"
       ROS_IP: "10.0.0.232"
 ```
-### ROS Namespace
-The Namespace is also defined in the docker-compose.yml file for each container. It is passed as command with the python script calls like this:
-```
-command: bash -c "source /yolo/catkin_ws/devel/setup.bash; ROS_NAMESPACE=pose_estimator python /yolov5/src/yolov5/ros_detection.py"
-```
-
-If you change it, the service names and visualization topics will change accordingly.
 
