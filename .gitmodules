@@ -6,4 +6,4 @@
 	url = https://github.com/hoenigpeter/gdrnpp_bop2022.git
 [submodule "src/yolov8"]
 	path = src/yolov8
-	url = https://github.com/hoenigpeter/yolov8_ros.git
+	url = https://github.com/hoenigpeter/yolov8_ros
