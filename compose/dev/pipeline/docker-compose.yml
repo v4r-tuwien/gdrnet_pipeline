@@ -28,21 +28,21 @@ services:
     image: yolo
     privileged: true
     build:
-      context: ../../../src/yolov8_ros/docker
+      context: ../../../src/yolov8/docker
       dockerfile: dockerfile_ros
     network_mode: "host"
     runtime: "nvidia"
     volumes:
       - /dev/bus/usb:/dev/bus/usb
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
-      - ../../../src/yolov8_ros:/root/yolo
+      - ../../../src/yolov8:/root/yolo
     environment: 
       - ROS_MASTER_URI=http://127.0.0.1:11311
       - ROS_IP=127.0.0.1
       - DISPLAY
       - QT_X11_NO_MITSHM=1
     command: bash -c "source catkin_ws/devel/setup.bash;
-                      python ./yolo/detect_ros_seg.py --conf-thres 0.9 --weights ./yolo/ycb_ichores.pt --data ./yolo/data/ycb_ichores.yaml --camera-topic '$$(rosparam get /pose_estimator/color_topic)'"
+                      python ./yolo/detect_ros_seg.py --conf-thres 0.9 --weights ./yolo/ycb_ichores.pt --camera-topic '$$(rosparam get /pose_estimator/color_topic)'"
     stdin_open: true
     tty: true 
 

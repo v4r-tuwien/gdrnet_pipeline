@@ -15,17 +15,13 @@ mkdir -p ./src/gdrnpp/datasets/BOP_DATASETS/ycbv
 cp -r models ./src/gdrnpp/datasets/BOP_DATASETS/ycbv
 rm -r gdrnpp_ycbv_models.zip models
 
-# Ycb ichores weights and models
+# # Ycb ichores weights and models
 wget -O ycb_ichores.zip "https://owncloud.tuwien.ac.at/index.php/s/qTajYeAhCghzRl3/download"
 unzip ycb_ichores.zip
 
-# unzip ycb_ichores/yolov5_weights/exp9.zip
-# cp -r exp9/weights/last.pt ./src/yolov5/yolov5_ycb_ichores_weights.pt
-# rm -r exp9 ycb_ichores/yolov5_weights
-
 unzip ycb_ichores/yolov8_weights/ycb_ichores.zip
-cp -r ycb_ichores/weights/last.pt ./src/yolov8_ros/ycb_ichores.pt
-rm -r ycb_ichores ycb_ichores/yolov8_weights
+cp -r train10/weights/last.pt ./src/yolov8/ycb_ichores.pt
+rm -r train10 ycb_ichores/yolov8_weights
 
 mkdir -p ./src/gdrnpp/output/gdrn/ycb_ichores
 cp -r ycb_ichores/gdrn_weight/model_final.pth ./src/gdrnpp/output/gdrn/ycb_ichores/gdrnpp_ycb_ichores_weights.pth
