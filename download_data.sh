@@ -1,8 +1,3 @@
-wget -O yolov5_ycbv_weights.zip "https://owncloud.tuwien.ac.at/index.php/s/lbnwdUAR3uSpKOj/download"
-unzip yolov5_ycbv_weights.zip
-cp -r yolov5_ycbv_weights.pt ./src/yolov5/yolov5_ycbv_weights.pt
-rm -r yolov5_ycbv_weights.zip yolov5_ycbv_weights.pt
-
 wget -O gdrnpp_ycbv_weights.zip "https://owncloud.tuwien.ac.at/index.php/s/fkCygRgrV9C7zDH/download"
 unzip gdrnpp_ycbv_weights.zip
 mkdir -p ./src/gdrnpp/output/gdrn/ycbv
