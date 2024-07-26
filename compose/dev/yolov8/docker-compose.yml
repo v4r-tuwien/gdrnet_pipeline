@@ -1,23 +1,24 @@
 version: '2.4'
 services:
-  yolov5:
-    image: yolov5
+  yolo:
+    image: yolo
     privileged: true
     build:
-      context: ../../../src/yolov5/docker/ycbv_segmentation_service
-      dockerfile: dockerfile
+      context: ../../../src/yolov8/docker
+      dockerfile: dockerfile_ros
     network_mode: "host"
     runtime: "nvidia"
     volumes:
       - /dev/bus/usb:/dev/bus/usb
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
-      - ../../../src/yolov5:/root/yolo
+      - ../../../src/yolov8:/root/yolo
     environment: 
       - ROS_MASTER_URI=http://127.0.0.1:11311
       - ROS_IP=127.0.0.1
       - DISPLAY
       - QT_X11_NO_MITSHM=1
     command: bash -c "source catkin_ws/devel/setup.bash;
-                      python ./yolo/detect_ros_seg.py --conf-thres 0.6 --weights ./yolo/yolov5_ycbv_weights.pt --data ./yolo/data/ycbv.yaml --camera-topic '$$(rosparam get /pose_estimator/color_topic)'"
+                      python ./yolo/detect_ros_seg.py --conf-thres 0.9 --weights ./yolo/ycb_ichores.pt --camera-topic '$$(rosparam get /pose_estimator/color_topic)'"
     stdin_open: true
     tty: true 
+
