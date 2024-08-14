@@ -1,11 +1,15 @@
 #! /usr/bin/env python3
 import rospy
-from object_detector_msgs.srv import detectron2_service_server
+from object_detector_msgs.srv import detectron2_service_server, estimate_pointing_gesture
 from robokudo_msgs.msg import GenericImgProcAnnotatorAction, GenericImgProcAnnotatorResult, GenericImgProcAnnotatorFeedback, GenericImgProcAnnotatorGoal
 import actionlib
 from sensor_msgs.msg import Image, RegionOfInterest
 import tf
 import numpy as np
+import open3d as o3d
+import yaml
+import os
+import time
 
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
@@ -13,12 +17,15 @@ from visualization_msgs.msg import Marker
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import Pose, Point, Quaternion
 
+import argparse
+
 class PoseCalculator:
-    def __init__(self):
+    def __init__(self, dataset="ycbv.yaml"):
         self.image_publisher = rospy.Publisher('/pose_estimator/image_with_roi', Image, queue_size=10)
-        self.marker_publisher = rospy.Publisher('/object_markers', Marker, queue_size=10)
         self.bridge = CvBridge()
-    
+
+        self.models = self.load_models("/root/task/datasets/" + dataset + "/models", "/root/config/" + dataset + ".yaml")
+
         self.client = actionlib.SimpleActionClient('/pose_estimator/gdrnet', 
                                                    GenericImgProcAnnotatorAction)
         self.client.wait_for_server()
@@ -27,16 +34,35 @@ class PoseCalculator:
                                                    GenericImgProcAnnotatorAction,
                                                    execute_cb=self.get_poses_robokudo,
                                                    auto_start=False)
+
+        self.frame_id = rospy.get_param('/pose_estimator/color_frame_id')
+
         self.server.start()
 
-    def detect(self, rgb):
+    def load_models(self, folder_path, yaml_file_path):
+        with open(yaml_file_path, 'r') as yaml_file:
+            yaml_data = yaml.safe_load(yaml_file)
+        
+        names = yaml_data.get('names', {})
+        models = {}
+
+        for obj_id, obj_name in names.items():
+            filename = f"obj_{int(obj_id):06d}.ply"
+            model_path = os.path.join(folder_path, filename)
+            if os.path.exists(model_path):
+                model = o3d.io.read_point_cloud(model_path)
+                vertices = np.asarray(model.points)
+                colors = np.asarray(model.colors) if model.colors else None
+                models[obj_name] = {'vertices': vertices, 'colors': colors}
+        return models
+
+    def detect_objects(self, rgb):
         rospy.wait_for_service('detect_objects')
         try:
-            detect_objects = rospy.ServiceProxy('detect_objects', detectron2_service_server)
-            response = detect_objects(rgb)
+            detect_objects_service = rospy.ServiceProxy('detect_objects', detectron2_service_server)
+            response = detect_objects_service(rgb)
             return response.detections.detections
         except rospy.ServiceException as e:
-
             print("Service call failed: %s" % e)
 
     def estimate(self, rgb, depth, detections):
@@ -49,7 +75,6 @@ class PoseCalculator:
             description = ''
             ind_detections = np.arange(0, len(detections), 1)
             for detection, index in zip(detections, ind_detections):
-                print(f"{index=}")
                 roi = RegionOfInterest()
                 roi.x_offset = detection.bbox.ymin
                 roi.y_offset = detection.bbox.xmin
@@ -64,7 +89,6 @@ class PoseCalculator:
                 else:
                     description = description + f', "{detection.name}": "{detection.score}"'
             description = '{' + description + '}'
-            print(f"{description=}")
             goal.bb_detections = bb_detections
             goal.class_names = class_names
             goal.description = description
@@ -75,41 +99,6 @@ class PoseCalculator:
             print("Service call failed: %s" % e)
 
         return result
-
-    # def publish_marker(self, result):
-    #         marker = Marker()
-    #         marker.header.frame_id = "camera_color_optical_frame"  # Replace with your desired frame ID
-    #         marker.header.stamp = rospy.Time.now()
-    #         marker.type = Marker.CUBE
-    #         marker.action = Marker.ADD
-
-    #         # Set the pose from the result
-    #         # x is z
-
-    #         marker.pose.position = Point(result.pose_results[0].position.x,
-    #                                     result.pose_results[0].position.y,
-    #                                     result.pose_results[0].position.z)
-    #         marker.pose.orientation = Quaternion(result.pose_results[0].orientation.x,
-    #                                             result.pose_results[0].orientation.y,
-    #                                             result.pose_results[0].orientation.z,
-    #                                             result.pose_results[0].orientation.w)
-
-    #         size_x = ( 97.15 ) / 1000
-    #         size_y = ( 66.62 ) / 1000
-    #         size_z = ( 191.408 ) / 1000
-
-    #         marker.scale.x = size_x
-    #         marker.scale.y = size_y
-    #         marker.scale.z = size_z
-
-    #         # Set the color (green in this example)
-    #         marker.color.r = 0.0
-    #         marker.color.g = 1.0
-    #         marker.color.b = 0.0
-    #         marker.color.a = 0.5
-
-    #         # Publish the marker
-    #         self.marker_publisher.publish(marker)
 
     def publish_annotated_image(self, rgb, detections):
         try:
@@ -138,10 +127,6 @@ class PoseCalculator:
         annotated_image_msg = self.bridge.cv2_to_imgmsg(cv_image, "bgr8")
         self.image_publisher.publish(annotated_image_msg)
 
-        # Display image for debugging
-        # cv2.imshow("Annotated Image", cv_image)
-        # cv2.waitKey(10)
-
     def get_poses_robokudo(self, goal):
         res = GenericImgProcAnnotatorResult()
         res.success = False
@@ -158,9 +143,8 @@ class PoseCalculator:
             return
         rgb = goal.rgb
         depth = goal.depth
-        print('Perform detection with YOLOv5 ...')
-        detections = self.detect(rgb)
-        
+        print('Perform detection with YOLOv8 ...')
+        detections = self.detect_objects(rgb)
         print("... received detection.")
 
         if detections is None or len(detections) == 0:
@@ -185,36 +169,94 @@ class PoseCalculator:
         print(f"{res=}")
         self.server.set_succeeded(res)
 
-    
+    def publish_mesh_marker(self, cls_name, quat, t_est):
+        from visualization_msgs.msg import Marker
+        vis_pub = rospy.Publisher("/gdrnet_meshes", Marker, latch=True)
+        model_data = self.models.get(cls_name, None)
+        model_vertices = np.array(model_data['vertices'])/1000
+        #model_colors = model_data['colors']
+
+        marker = Marker()
+        marker.header.frame_id = self.frame_id
+        marker.header.stamp = rospy.Time.now()
+        marker.type = Marker.TRIANGLE_LIST
+        marker.ns = cls_name
+        marker.action = Marker.ADD
+        marker.pose.position.x = t_est[0]
+        marker.pose.position.y = t_est[1]
+        marker.pose.position.z = t_est[2]
+        #quat = Rotation.from_matrix(R_est).as_quat()
+        marker.pose.orientation.x = quat[0]
+        marker.pose.orientation.y = quat[1]
+        marker.pose.orientation.z = quat[2]
+        marker.pose.orientation.w = quat[3]
+        marker.scale.x = 1.0
+        marker.scale.y = 1.0
+        marker.scale.z = 1.0
+        from geometry_msgs.msg import Point
+        from std_msgs.msg import ColorRGBA
+        #assert model_vertices.shape[0] == model_colors.shape[0]
+
+        # TRIANGLE_LIST needs 3*x points to render x triangles 
+        # => find biggest number smaller than model_vertices.shape[0] that is still divisible by 3
+        shape_vertices = 3*int((model_vertices.shape[0] - 1)/3)
+        for i in range(shape_vertices):
+            pt = Point(x = model_vertices[i, 0], y = model_vertices[i, 1], z = model_vertices[i, 2])
+            marker.points.append(pt)
+            rgb = ColorRGBA(r = 1, g = 0, b = 0, a = 1.0)
+            marker.colors.append(rgb)
+
+        vis_pub.publish(marker)
+
+def parse_opt():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--dataset', type=str, default='ycbv.yaml')
+
+    opt = parser.parse_args()
+    return opt
+
 if __name__ == "__main__":
     rospy.init_node("calculate_poses")
+    opt = parse_opt()
+
     try:
-        pose_calculator = PoseCalculator()
-        rate = rospy.Rate(2)  # Adjust the rate as needed (Hz)
+        pose_calculator = PoseCalculator(**vars(opt))
+        rate = rospy.Rate(10)  # Adjust the rate as needed (Hz)
 
         while not rospy.is_shutdown():
             # Assuming you have a way to get RGB and depth images
             rgb = rospy.wait_for_message(rospy.get_param('/pose_estimator/color_topic'), Image)
             depth = rospy.wait_for_message(rospy.get_param('/pose_estimator/depth_topic'), Image)
 
-            print('Perform detection with YOLOv5 ...')
-            detections = pose_calculator.detect(rgb)
-            print("... received detection.")
+            #print('Perform detection with YOLOv8 ...')
+            t0 = time.time()
+            detections = pose_calculator.detect_objects(rgb)
+            time_detections = time.time() - t0
 
+            pose_calculator.publish_annotated_image(rgb, detections)
+            #print("... received object detection.")
+
+            estimated_poses = []
+            t0 = time.time()
             if detections is None or len(detections) == 0:
                 print("nothing detected")
             else:
-                print('Perform pose estimation with GDR-Net++ ...')
+                #print('Perform pose estimation with GDR-Net++ ...')
                 try:
                     # Check for specific class and skip processing
                     if not any(detection.name == "036_wood_block" for detection in detections):
-                        result = pose_calculator.estimate(rgb, depth, detections)
-                        pose_calculator.publish_annotated_image(rgb, detections)
+                        estimated_poses = pose_calculator.estimate(rgb, depth, detections)
+                        print(estimated_poses.class_names[0] + " with confidence " + str(estimated_poses.class_confidences[0]))
                         #pose_calculator.publish_marker(result)
+
                 except Exception as e:
                     rospy.logerr(f"{e}")
+            time_object_poses = time.time() - t0
 
-            rate.sleep()
+            # Print the timed periods
+            print(f"Time for object detection: {time_detections:.2f} seconds")
+            print(f"Time for object pose estimation: {time_object_poses:.2f} seconds")
+            print()
 
     except rospy.ROSInterruptException:
         pass

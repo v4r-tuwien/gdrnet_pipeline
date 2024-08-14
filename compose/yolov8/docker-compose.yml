@@ -1,0 +1,26 @@
+version: '2.4'
+services:
+  yolo:
+    image: yolo
+    privileged: true
+    build:
+      context: ../../src/yolov8_ros/docker
+      dockerfile: dockerfile_ros
+    network_mode: "host"
+    runtime: "nvidia"
+    volumes:
+      - /dev/bus/usb:/dev/bus/usb
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - "../../src/yolov8_ros:/root/yolo:rw"
+      - "../../data/weights/yolov8:/root/yolo/weights:rw"
+      - ../../config:/root/config
+    environment: 
+      - ROS_MASTER_URI=${ROS_MASTER_URI:-http://127.0.0.1:11311}
+      - ROS_IP=${ROS_IP:-127.0.0.1}
+      - DISPLAY
+      - QT_X11_NO_MITSHM=1
+      - DATASET=${DATASET}
+    command: bash -c "source catkin_ws/devel/setup.bash;
+                      python ./yolo/detect_ros_seg.py --conf-thres 0.8 --weights ./yolo/weights/${DATASET}.pt --camera-topic '$$(rosparam get /pose_estimator/color_topic)'"
+    stdin_open: true
+    tty: true 

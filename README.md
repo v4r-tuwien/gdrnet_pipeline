@@ -1,5 +1,5 @@
-# Object detection and pose estimation pipeline using YOLOv8 and GDR-Net++
-The pipeline is implemented for the detection and pose estimatino of YCB-V objects.
+# GDR-Net Pipeline for Object Detection and Pose Estimation with ROS
+The pipeline is implemented for the detection and pose estimation of YCB-V, and the YCB-iChores objects.
 This repo includes submodules.
 Clone this repository via either SSH or HTTPS and clone the submodules as well by:
 - `git clone https://github.com/v4r-tuwien/gdrnet_pipeline.git`
@@ -11,6 +11,29 @@ Use the following to pull updates:
 - `git pull --recurse-submodules`
 
 The YOLOv8 and the GDRN++ docker containers need ~35 GB of free disk space.
+
+## Requirements
+- The YOLOv8 and the GDRN++ docker containers need ~35 GB of free disk space.
+- A NVIDIA GPU with >16GB is recommended
+- System RAM >= 64 GB is recommended
+
+| Module                               | VRAM Usage | System RAM Usage | Disk Space | Description                                 | Link                                                                                   |
+|--------------------------------------|------------|------------------|------------|---------------------------------------------|----------------------------------------------------------------------------------------|
+| YOLOv8                               | 2.2 GB     | 1.4 GB           | 16.2 GB    | 2D Object Detection with YOLOv8             | [YOLOv8](https://github.com/hoenigpeter/yolov8_ros)                                    |
+| GDRN++                               | 3.5 GB     | 7.0 GB           | 18.7 GB    | 6D Object Pose Estimation with GDRN++       | [GDR-Net++](https://github.com/hoenigpeter/gdrnpp_bop2022)                             |
+
+
+## ROS Config
+ROS_IP and ROS_MASTER_URI differ from setup to setup.
+### Local Machine Debugging
+When doing debugging on a local machine with a local ROS master e.g. with https://github.com/hoenigpeter/realsense_ros_docker the ROS_IP and ROS_MASTER_URI are:
+- ROS_IP=127.0.0.1
+- ROS_MASTER_URI=http://127.0.0.1:11311
+
+### Robot Setup
+This is different when the roscore is running on a robot, e.g. HSR:
+- ROS_MASTER_URI=http://10.0.0.143:11311
+- ROS_IP=10.0.0.232
 
 ## Startup using the compose file(s)
 [Configure](#configurations) all files first. Don't forget to set the [IP Adress of the ROS Master](#ros-master) if you have another ROS-Core running.
@@ -24,13 +47,18 @@ full pipeline:
 ./download_data.sh
 cd compose/pipeline
 xhost +
-docker-compose up
 ```
+then for YCB-V dataset objects (ROS example for local setup, adapt ROS_MASTER_URI and ROS_IP depending on your setup):
 
-Three Docker containers will be started:
-- yolov8: [YOLOv8](https://github.com/hoenigpeter/yolov8_ros) trained on YCB-V Dataset
-- gdrnetpp: Pose Estimation with [GDR-Net++](https://github.com/shanice-l/gdrnpp_bop2022) trained on YCB-V Dataset
-- task: Node that calls detect, estimate_pose service and calculates object poses
+```
+ROS_MASTER_URI=http://127.0.0.1:11311 ROS_IP=127.0.0.1  DATASET=ycbv CONFIG=params_realsense.yaml docker-compose up
+```
+or for YCB-iChores dataset objects:
+
+```
+ROS_MASTER_URI=http://127.0.0.1:11311 ROS_IP=127.0.0.1  DATASET=ycb_ichores CONFIG=params_realsense.yaml docker-compose up
+```
+Docker containers for yolov8, GDRN++ and MediaPipe will be started.
 
 ## Visualization
 To visualize the estimated bounding box and object pose use RViZ and load the RViZ config from ./configs/default.rviz

@@ -1,0 +1,77 @@
+version: '2.4'
+services:
+  task:
+    image: task
+    privileged: true
+    build: 
+      context: ../../
+      dockerfile: src/task/dockerfile
+    network_mode: "host"
+    runtime: "nvidia"
+    volumes:
+      - /dev/bus/usb:/dev/bus/usb
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ../../src/task:/root/task
+      - ../../config:/root/config
+      - "../../data/datasets:/root/task/datasets:rw"
+    environment:
+      - ROS_MASTER_URI=${ROS_MASTER_URI:-http://127.0.0.1:11311}
+      - ROS_IP=${ROS_IP:-127.0.0.1}
+      - DISPLAY
+      - QT_X11_NO_MITSHM=1
+      - DATASET=${DATASET}
+    command: bash -c "source catkin_ws/devel/setup.bash;
+                      rosparam load /root/config/${CONFIG} /pose_estimator;
+                      python /root/task/test_obj_det_dev.py --dataset ${DATASET}"
+    stdin_open: true
+    tty: true
+
+  yolo:
+    image: yolo
+    privileged: true
+    build:
+      context: ../../src/yolov8/docker
+      dockerfile: dockerfile_ros
+    network_mode: "host"
+    runtime: "nvidia"
+    volumes:
+      - /dev/bus/usb:/dev/bus/usb
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - "../../src/yolov8:/root/yolo:rw"
+      - "../../data/weights/yolov8:/root/yolo/weights:rw"
+      - ../../config:/root/config
+    environment: 
+      - ROS_MASTER_URI=${ROS_MASTER_URI:-http://127.0.0.1:11311}
+      - ROS_IP=${ROS_IP:-127.0.0.1}
+      - DISPLAY
+      - QT_X11_NO_MITSHM=1
+      - DATASET=${DATASET}
+    command: bash -c "source catkin_ws/devel/setup.bash;
+                      python ./yolo/detect_ros_seg.py --conf-thres 0.8 --weights ./yolo/weights/${DATASET}.pt --camera-topic '$$(rosparam get /pose_estimator/color_topic)'"
+    stdin_open: true
+    tty: true 
+
+  gdrnpp:
+    image: gdrnpp
+    build:
+      context: ../../src/gdrnpp/docker
+      dockerfile: dockerfile_ros
+    network_mode: "host"
+    runtime: "nvidia"
+    volumes:
+      - "../../src/gdrnpp:/root/gdrnpp:rw"
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - /etc/localtime:/etc/localtime:ro
+      - "../../data/weights/gdrnpp:/root/gdrnpp/output:rw"
+      - "../../data/datasets:/root/gdrnpp/datasets/BOP_DATASETS:rw"
+      - ../../config:/root/config
+    environment: 
+      - ROS_MASTER_URI=${ROS_MASTER_URI:-http://127.0.0.1:11311}
+      - ROS_IP=${ROS_IP:-127.0.0.1}
+      - DISPLAY
+      - QT_X11_NO_MITSHM=1
+      - DATASET=${DATASET}
+    command: bash -c "source catkin_ws/devel/setup.bash;
+             python ./gdrnpp/core/gdrn_modeling/demo/demo_gdrn_ros_robokudo.py --model_file ${DATASET}"        
+    stdin_open: true
+    tty: true
