@@ -1,21 +1,18 @@
 #! /usr/bin/env python3
 import rospy
-from object_detector_msgs.srv import detectron2_service_server, estimate_pointing_gesture
 from robokudo_msgs.msg import GenericImgProcAnnotatorAction, GenericImgProcAnnotatorResult, GenericImgProcAnnotatorFeedback, GenericImgProcAnnotatorGoal
 import actionlib
 from sensor_msgs.msg import Image, RegionOfInterest
-import tf
 import numpy as np
 import open3d as o3d
 import yaml
 import os
 import time
+from actionlib_msgs.msg import GoalStatus
 
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
-from visualization_msgs.msg import Marker
 from sensor_msgs.msg import Image
-from geometry_msgs.msg import Pose, Point, Quaternion
 
 import argparse
 
@@ -24,7 +21,7 @@ class PoseCalculator:
         self.image_publisher = rospy.Publisher('/pose_estimator/image_with_roi', Image, queue_size=10)
         self.bridge = CvBridge()
 
-        self.models = self.load_models("/root/task/datasets/" + dataset + "/models", "/root/config/" + dataset + ".yaml")
+        self.models = self.load_models("/root/task/datasets/" + dataset + "/models", "/root/config/" + dataset + "_names.yaml")
 
         self.client = actionlib.SimpleActionClient('/pose_estimator/gdrnet', 
                                                    GenericImgProcAnnotatorAction)
@@ -36,6 +33,8 @@ class PoseCalculator:
                                                    auto_start=False)
 
         self.frame_id = rospy.get_param('/pose_estimator/color_frame_id')
+        
+        self.obj_det = actionlib.SimpleActionClient('/object_detector/yolov8', GenericImgProcAnnotatorAction)
 
         self.server.start()
 
@@ -56,40 +55,43 @@ class PoseCalculator:
                 models[obj_name] = {'vertices': vertices, 'colors': colors}
         return models
 
-    def detect_objects(self, rgb):
-        rospy.wait_for_service('detect_objects')
-        try:
-            detect_objects_service = rospy.ServiceProxy('detect_objects', detectron2_service_server)
-            response = detect_objects_service(rgb)
-            return response.detections.detections
-        except rospy.ServiceException as e:
-            print("Service call failed: %s" % e)
+    def detect_objects(self, rgb, timeout=10):
+        goal = GenericImgProcAnnotatorGoal()
+        goal.rgb = rgb
 
-    def estimate(self, rgb, depth, detections):
+        rospy.logdebug('Sending goal to object detector')
+        self.obj_det.send_goal(goal)
+        rospy.logdebug('Waiting for object detection results')
+        goal_finished = self.obj_det.wait_for_result(rospy.Duration(timeout))
+        if not goal_finished:
+            rospy.logerr('Object Detector didn\'t return results before timing out!')
+            return [], [], []
+        
+        detection_result = self.obj_det.get_result()
+        server_state = self.obj_det.get_state()
+        
+        if server_state != GoalStatus.SUCCEEDED or len(detection_result.class_names) <= 0:
+            rospy.logwarn('Object Detector failed to detect objects!')
+            # return empty response if no objects were detected
+            return [], [], []
+        rospy.loginfo(f'Detected {len(detection_result.class_names)} objects.')
+        
+        return detection_result.bounding_boxes, detection_result.class_names, detection_result.class_confidences
+
+    def estimate(self, rgb, depth, bounding_boxes, class_names, class_confidences):
         try:
             goal = GenericImgProcAnnotatorGoal()
             goal.rgb = rgb
             goal.depth = depth
-            bb_detections = []
-            class_names = []
             description = ''
-            ind_detections = np.arange(0, len(detections), 1)
-            for detection, index in zip(detections, ind_detections):
-                roi = RegionOfInterest()
-                roi.x_offset = detection.bbox.ymin
-                roi.y_offset = detection.bbox.xmin
-                roi.height = detection.bbox.xmax - detection.bbox.xmin
-                roi.width = detection.bbox.ymax - detection.bbox.ymin
-                roi.do_rectify = False
-
-                bb_detections.append(roi)
-                class_names.append(detection.name)
+            ind_detections = np.arange(0, len(class_names), 1)
+            for name, score, index in zip(class_names, class_confidences, ind_detections):
                 if index == 0:
-                    description = description + f'"{detection.name}": "{detection.score}"'
+                    description = description + f'"{name}": "{score}"'
                 else:
-                    description = description + f', "{detection.name}": "{detection.score}"'
+                    description = description + f', "{name}": "{score}"'
             description = '{' + description + '}'
-            goal.bb_detections = bb_detections
+            goal.bb_detections = bounding_boxes
             goal.class_names = class_names
             goal.description = description
             self.client.send_goal(goal)
@@ -100,26 +102,25 @@ class PoseCalculator:
 
         return result
 
-    def publish_annotated_image(self, rgb, detections):
+    def publish_annotated_image(self, rgb, bounding_boxes, class_names, class_confidences):
         try:
             cv_image = self.bridge.imgmsg_to_cv2(rgb, "bgr8")
         except CvBridgeError as e:
             rospy.logerr(e)
             return
 
-        for detection in detections:
-            xmin = int(detection.bbox.ymin)
-            ymin = int(detection.bbox.xmin)
-            xmax = int(detection.bbox.ymax)
-            ymax = int(detection.bbox.xmax)
+        for bb, name, score in zip(bounding_boxes, class_names, class_confidences):
+            xmin = int(bb.x_offset)
+            ymin = int(bb.y_offset)
+            xmax = int(bb.x_offset + bb.width)
+            ymax = int(bb.y_offset + bb.height)
 
             font_size = 1.0
             line_size = 3
 
             cv2.rectangle(cv_image, (xmin, ymin), (xmax, ymax), (0, 255, 0), line_size)
 
-            class_name = detection.name
-            score = detection.score
+            class_name = name
             label = f"{class_name}: {score:.2f}"
             cv2.putText(cv_image, label, (xmin, ymin - 20), cv2.FONT_HERSHEY_SIMPLEX, font_size, (0, 255, 0), line_size)
 
@@ -230,22 +231,22 @@ if __name__ == "__main__":
 
             #print('Perform detection with YOLOv8 ...')
             t0 = time.time()
-            detections = pose_calculator.detect_objects(rgb)
+            bounding_boxes, class_names, class_confidences = pose_calculator.detect_objects(rgb)
             time_detections = time.time() - t0
 
-            pose_calculator.publish_annotated_image(rgb, detections)
+            pose_calculator.publish_annotated_image(rgb, bounding_boxes, class_names, class_confidences)
             #print("... received object detection.")
 
             estimated_poses = []
             t0 = time.time()
-            if detections is None or len(detections) == 0:
+            if class_names is None or len(class_names) == 0:
                 print("nothing detected")
             else:
                 #print('Perform pose estimation with GDR-Net++ ...')
                 try:
                     # Check for specific class and skip processing
-                    if not any(detection.name == "036_wood_block" for detection in detections):
-                        estimated_poses = pose_calculator.estimate(rgb, depth, detections)
+                    if not any(name == "036_wood_block" for name in class_names):
+                        estimated_poses = pose_calculator.estimate(rgb, depth, bounding_boxes, class_names, class_confidences)
                         print(estimated_poses.class_names[0] + " with confidence " + str(estimated_poses.class_confidences[0]))
                         #pose_calculator.publish_marker(result)
 
@@ -260,4 +261,3 @@ if __name__ == "__main__":
 
     except rospy.ROSInterruptException:
         pass
-
