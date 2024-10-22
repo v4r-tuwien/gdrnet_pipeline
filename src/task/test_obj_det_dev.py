@@ -21,7 +21,7 @@ class PoseCalculator:
         self.image_publisher = rospy.Publisher('/pose_estimator/image_with_roi', Image, queue_size=10)
         self.bridge = CvBridge()
 
-        self.models = self.load_models("/root/task/datasets/" + dataset + "/models", "/root/config/" + dataset + "_names.yaml")
+        self.models = self.load_models("/root/task/datasets/" + dataset + "/models", "/root/config/" + dataset + ".yaml")
 
         self.client = actionlib.SimpleActionClient('/pose_estimator/gdrnet', 
                                                    GenericImgProcAnnotatorAction)

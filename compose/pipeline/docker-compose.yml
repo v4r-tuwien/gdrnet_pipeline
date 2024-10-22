@@ -72,6 +72,6 @@ services:
       - QT_X11_NO_MITSHM=1
       - DATASET=${DATASET}
     command: bash -c "source catkin_ws/devel/setup.bash;
-             python ./gdrnpp/core/gdrn_modeling/demo/demo_gdrn_ros_robokudo.py --model_file ${DATASET}"        
+             python ./gdrnpp/core/gdrn_modeling/demo/demo_gdrn_ros_robokudo.py --dataset_name ${DATASET}"        
     stdin_open: true
     tty: true

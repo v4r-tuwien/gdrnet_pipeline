@@ -60,9 +60,9 @@ RUN mkdir -p /root/catkin_ws/src
 RUN cd /root/catkin_ws/
 RUN /bin/bash -c  '. /opt/ros/noetic/setup.bash; cd /root/catkin_ws; catkin config -DPYTHON_EXECUTABLE=/usr/bin/python3 -DPYTHON_INCLUDE_DIR=/usr/include/python3.6m -DPYTHON_LIBRARY=/usr/lib/x86_64-linux-gnu/libpython3.6m.so; catkin build'
 
+RUN pip install open3d pyyaml opencv-python --ignore-installed
+
 # clone and build message and service definitions
-RUN /bin/bash -c 'cd /root/catkin_ws/src; \
-                  git clone https://github.com/v4r-tuwien/object_detector_msgs.git'
 RUN /bin/bash -c 'cd /root/catkin_ws/src; \
                   git clone https://gitlab.informatik.uni-bremen.de/robokudo/robokudo_msgs.git'
 RUN /bin/bash -c '. /opt/ros/noetic/setup.bash; cd /root/catkin_ws; catkin build'
